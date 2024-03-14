@@ -203,13 +203,45 @@ function M:create_line()
 	end
 
 	function line:set_height(height)
-		if utils.direction_have(utils.direction.up) then
+		local t,b,l,r =
+			utils.direction_have(utils.direction.up),
+			utils.direction_have(utils.direction.bottom),
+			utils.direction_have(utils.direction.left),
+			utils.direction_have(utils.direction.right)
+		-- vim.notify(string.format("t=%s   b=%s   l=%s   r=%s", tostring(t), tostring(b), tostring(l), tostring(r)))
+
+		-- NOTE: avoid vertical line covering statusline
+		-- fix wrong align in upper win
+		if ((b) and (t) and (l) and (r)) then
 			height = height + 1
 		end
 
-		if utils.direction_have(utils.direction.bottom) then
-			height = height-- + 1
+		if ((b) and (t) and (not l) and r) then
+			height = height + 1
 		end
+
+		if ((b) and (t) and (l) and (not r)) then
+			height = height + 1
+		end
+
+		if ((not b) and (not t) and (l) and (r)) then
+			if height > 1 then
+			height = height - 1
+			end
+		end
+
+		if ((not b) and (not t) and (not l) and (r)) then
+			if height > 1 then
+			height = height - 1
+			end
+		end
+
+		if ((not b) and (not t) and (l) and (not r)) then
+			if height > 1 then
+			height = height - 1
+			end
+		end
+
 		self:hcorrection(height)
 		self.opts.height = height
 		self:load_opts(self.opts)
@@ -239,9 +271,8 @@ function M:create_horizontal_line(height, start_symbol, body_symbol, end_symbol)
 	line.start_symbol = start_symbol
 	line.body_symbol = body_symbol
 	line.end_symbol = end_symbol
-
 	line:set_width(1)
-	line:set_height(height)
+	line:set_height(2)
 	function line:hcorrection(height)
 		local line = utils.build_horizontal_line_symbol(height, self.start_symbol, self.body_symbol, self.end_symbol)
 		vim.api.nvim_buf_set_lines(self.buffer, 0, -1, false, line)
